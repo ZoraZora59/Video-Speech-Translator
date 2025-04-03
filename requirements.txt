@@ -1,0 +1,38 @@
+# 核心依赖
+python-dotenv>=1.0.0
+loguru>=0.7.0
+typer>=0.9.0
+rich>=13.4.2
+pydantic>=2.4.2
+
+# 视频处理
+ffmpeg-python>=0.2.0
+moviepy>=1.0.3
+
+# 语音识别
+whisper>=1.1.10
+whisperx>=3.1.1
+
+# 翻译服务
+googletrans>=4.0.0-rc1
+deepltranslator>=1.11.0
+
+# 字幕处理
+pysrt>=1.1.2
+webvtt-py>=0.4.6
+
+# Web界面
+fastapi>=0.103.1
+uvicorn>=0.23.2
+jinja2>=3.1.2
+python-multipart>=0.0.6
+
+# 测试工具
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# 开发工具
+black>=23.7.0
+isort>=5.12.0
+mypy>=1.5.1
+ruff>=0.0.284

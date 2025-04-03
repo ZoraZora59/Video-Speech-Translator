@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动视频翻译工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 2rem;
+            background-color: #f8f9fa;
+        }
+        .header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 1rem;
+        }
+        .upload-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .progress-container {
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .result-container {
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+        }
+        .language-checkbox {
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #dropArea {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        #dropArea.highlight {
+            border-color: #007bff;
+            background-color: #f1f8ff;
+        }
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            color: #6c757d;
+            border-top: 1px solid #e5e5e5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header text-center">
+            <h1>自动视频翻译工具</h1>
+            <p class="lead">将视频中的语音转换为多语言字幕</p>
+        </div>
+
+        <div class="upload-container" id="uploadContainer">
+            <h2 class="mb-4">上传视频</h2>
+            
+            <div id="dropArea">
+                <div id="dropText">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-cloud-arrow-up mb-3" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+                        <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                    </svg>
+                    <p>拖放视频文件到这里，或点击选择文件</p>
+                    <p class="text-muted small">支持的格式: MP4, AVI, MOV, MKV, WEBM, FLV</p>
+                </div>
+                <div id="fileInfo" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-file-earmark-play mb-3" viewBox="0 0 16 16">
+                        <path d="M6 6.883v4.234a.5.5 0 0 0 .757.429l3.528-2.117a.5.5 0 0 0 0-.858L6.757 6.454a.5.5 0 0 0-.757.43z"/>
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                    </svg>
+                    <p id="fileName"></p>
+                    <button class="btn btn-sm btn-outline-danger" id="removeFile">移除</button>
+                </div>
+            </div>
+
+            <form id="uploadForm">
+                <input type="file" id="fileInput" style="display: none;" accept=".mp4,.avi,.mov,.mkv,.webm,.flv">
+                
+                <div class="mb-4">
+                    <h5>选择目标语言</h5>
+                    <div id="languageOptions" class="d-flex flex-wrap">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5>字幕格式</h5>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="subtitleFormat" id="formatSRT" value="srt" checked>
+                        <label class="form-check-label" for="formatSRT">SRT</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="subtitleFormat" id="formatVTT" value="vtt">
+                        <label class="form-check-label" for="formatVTT">WebVTT</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="startButton" disabled>开始处理</button>
+            </form>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <h2 class="mb-4">处理进度</h2>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span id="progressStage">准备中...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p class="text-muted mt-2" id="progressMessage">正在准备处理视频...</p>
+            </div>
+            
+            <button class="btn btn-secondary" id="cancelButton">取消</button>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <h2 class="mb-4">处理完成</h2>
+            
+            <div class="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                </svg>
+                视频处理成功完成！
+            </div>
+            
+            <h5>生成的字幕文件</h5>
+            <div class="list-group mb-4" id="subtitleList">
+                <!-- 字幕文件列表将在这里动态生成 -->
+            </div>
+            
+            <button class="btn btn-primary" id="newTaskButton">处理新视频</button>
+        </div>
+
+        <div class="footer text-center">
+            <p>自动视频翻译工具 &copy; 2023</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 元素引用
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const uploadForm = document.getElementById('uploadForm');
+            const startButton = document.getElementById('startButton');
+            const uploadContainer = document.getElementById('uploadContainer');
+            const progressContainer = document.getElementById('progressContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressStage = document.getElementById('progressStage');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressMessage = document.getElementById('progressMessage');
+            const cancelButton = document.getElementById('cancelButton');
+            const newTaskButton = document.getElementById('newTaskButton');
+            const subtitleList = document.getElementById('subtitleList');
+            const dropText = document.getElementById('dropText');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const removeFile = document.getElementById('removeFile');
+            const languageOptions = document.getElementById('languageOptions');
+
+            // 当前任务ID
+            let currentTaskId = null;
+            // 轮询间隔ID
+            let pollIntervalId = null;
+            // 选择的文件
+            let selectedFile = null;
+
+            // 加载支持的语言列表
+            fetchLanguages();
+
+            // 拖放事件处理
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('highlight');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('highlight');
+            }
+
+            // 处理文件拖放
+            dropArea.addEventListener('drop', handleDrop, false);
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFiles(files[0]);
+                }
+            }
+
+            // 点击选择文件
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    handleFiles(fileInput.files[0]);
+                }
+            });
+
+            // 处理选择的文件
+            function handleFiles(file) {
+                // 检查文件类型
+                const validExtensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv'];
+                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+                if (!validExtensions.includes(fileExt)) {
+                    alert('不支持的文件格式。请上传 MP4, AVI, MOV, MKV, WEBM 或 FLV 格式的视频文件。');
+                    return;
+                }
+
+                selectedFile = file;
+                fileName.textContent = file.name;
+                dropText.style.display = 'none';
+                fileInfo.style.display = 'block';
+                startButton.disabled = false;
+            }
+
+            // 移除选择的文件
+            removeFile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedFile = null;
+                fileInput.value = '';
+                dropText.style.display = 'block';
+                fileInfo.style.display = 'none';
+                startButton.disabled = true;
+            });
+
+            // 提交表单
+            uploadForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!selectedFile) {
+                    alert('请先选择一个视频文件');
+                    return;
+                }
+
+                // 获取选中的语言
+                const selectedLanguages = [];
+                document.querySelectorAll('input[name="targetLanguages"]:checked').forEach(checkbox => {
+                    selectedLanguages.push(checkbox.value);
+                });
+
+                if (selectedLanguages.length === 0) {
+                    alert('请至少选择一种目标语言');
+                    return;
+                }
+
+                // 获取字幕格式
+                const subtitleFormat = document.querySelector('input[name="subtitleFormat"]:checked').value;
+
+                // 创建FormData
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('target_languages', selectedLanguages.join(','));
+                formData.append('subtitle_format', subtitleFormat);
+
+                try {
+                    // 显示进度界面
+                    uploadContainer.style.display = 'none';
+                    progressContainer.style.display = 'block';
+                    resultContainer.style.display = 'none';
+
+                    // 发送请求
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`上传失败: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    currentTaskId = data.task_id;
+
+                    // 开始轮询进度
+                    startProgressPolling();
+                } catch (error) {
+                    alert(`错误: ${error.message}`);
+                    resetUI();
+                }
+            });
+
+            // 轮询进度
+            function startProgressPolling() {
+                pollIntervalId = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/progress/${currentTaskId}`);
+                        if (!response.ok) {
+                            throw new Error(`获取进度失败: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+                        updateProgress(data);
+
+                        // 检查是否完成或出错
+                        if (data.stage === '完成') {
+                            clearInterval(pollIntervalId);
+                            showResults(data.result);
+                        } else if (data.stage === '错误') {
+                            clearInterval(pollIntervalId);
+                            alert(`处理失败: ${data.error}`);
+                            resetUI();
+                        }
+                    } catch (error) {
+                        console.error('轮询进度出错:', error);
+                    }
+                }, 1000);
+            }
+
+            // 更新进度显示
+            function updateProgress(data) {
+                progressStage.textContent = data.stage;
+                progressMessage.textContent = data.message;
+                const percent = Math.round(data.percent * 100);
+                progressPercent.textContent = `${percent}%`;
+                progressBar.style.width = `${percent}%`;
+            }
+
+            // 显示结果
+            function showResults(results) {
+                // 清空字幕列表
+                subtitleList.innerHTML = '';
+
+                // 添加字幕文件
+                for (const [lang, path] of Object.entries(results)) {
+                    const fileName = path.split('/').pop();
+                    const item = document.createElement('a');
+                    item.href = `/download/${currentTaskId}/${lang}`;
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div>
+                            <strong>${getLanguageName(lang)}</strong>
+                            <div class="text-muted small">${fileName}</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary">下载</button>
+                    `;
+                    subtitleList.appendChild(item);
+                }
+
+                // 显示结果界面
+                progressContainer.style.display = 'none';
+                resultContainer.style.display = 'block';
+            }
+
+            // 获取语言名称
+            function getLanguageName(code) {
+                const languageMap = {
+                    'en': '英语 (English)',
+                    'zh-CN': '简体中文 (Chinese Simplified)',
+                    'zh-TW': '繁体中文 (Chinese Traditional)',
+                    'ja': '日语 (Japanese)',
+                    'ko': '韩语 (Korean)',
+                    'fr': '法语 (French)',
+                    'de': '德语 (German)',
+                    'es': '西班牙语 (Spanish)',
+                    'it': '意大利语 (Italian)',
+                    'ru': '俄语 (Russian)',
+                    'pt': '葡萄牙语 (Portuguese)',
+                    'ar': '阿拉伯语 (Arabic)',
+                    'hi': '印地语 (Hindi)',
+                    'th': '泰语 (Thai)',
+                    'vi': '越南语 (Vietnamese)'
+                };
+                return languageMap[code] || code;
+            }
+
+            // 重置界面
+            function resetUI() {
+                uploadContainer.style.display = 'block';
+                progressContainer.style.display = 'none';
+                resultContainer.style.display = 'none';
+                currentTaskId = null;
+                if (pollIntervalId) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                }
+            }
+
+            // 取消按钮
+            cancelButton.addEventListener('click', () => {
+                if (pollIntervalId) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                }
+                resetUI();
+            });
+
+            // 新任务按钮
+            newTaskButton.addEventListener('click', () => {
+                resetUI();
+                // 重置文件选择
+                selectedFile = null;
+                fileInput.value = '';
+                dropText.style.display = 'block';
+                fileInfo.style.display = 'none';
+                startButton.disabled = true;
+            });
+
+            // 获取支持的语言列表
+            async function fetchLanguages() {
+                try {
+                    const response = await fetch('/languages');
+                    if (!response.ok) {
+                        throw new Error(`获取语言列表失败: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    // 清空加载指示器
+                    languageOptions.innerHTML = '';
+
+                    // 添加语言选项
+                    data.languages.forEach(lang => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check language-checkbox';
+                        div.innerHTML = `
+                            <input class="form-check-input" type="checkbox" name="targetLanguages" id="lang-${lang.code}" value="${lang.code}">
+                            <label class="form-check-label" for="lang-${lang.code}">${lang.name}</label>
+                        `;
+                        languageOptions.appendChild(div);
+                    });
+
+                    // 默认选中英语
+                    const enCheckbox = document.getElementById('lang-en');
+                    if (enCheckbox) {
+                        enCheckbox.checked = true;
+                    }
+                } catch (error) {
+                    console.error('获取语言列表出错:', error);
+                    languageOptions.innerHTML = '<div class="alert alert-danger">加载语言列表失败</div>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
